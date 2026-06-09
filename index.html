@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UW GROUP — BOD Executive Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red:     #9a1220;
+  --red2:    #EE202E;
+  --dark:    #1a1a1a;
+  --char:    #2d2d2d;
+  --mid:     #434345;
+  --muted:   #6b6b6d;
+  --border:  #e0e0e0;
+  --bg:      #ffffff;
+  --bgf:     #f7f7f7;
+  --green:   #1a7a3c;
+  --tan:     #c8b89a;
+  --font:    'Prompt', sans-serif;
+}
+html { font-family: var(--font); color: var(--mid); background: #f0f0f0; font-size: 13px; }
+body { max-width: 1440px; margin: 0 auto; background: var(--bg); }
+
+/* ── UPLOAD SCREEN ── */
+#upload-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  gap: 0;
+}
+.upload-logo {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--red);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.upload-tagline {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 48px;
+  text-transform: uppercase;
+}
+.upload-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--red);
+  padding: 48px 56px;
+  width: 560px;
+  text-align: center;
+}
+.upload-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+.upload-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 36px;
+  line-height: 1.7;
+}
+.upload-drop {
+  border: 2px dashed #d0d0d0;
+  padding: 40px 24px;
+  cursor: pointer;
+  transition: border-color .2s;
+  margin-bottom: 20px;
+  position: relative;
+}
+.upload-drop:hover { border-color: var(--red); }
+.upload-drop input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+}
+.upload-icon { font-size: 36px; margin-bottom: 12px; opacity: .4; }
+.upload-drop-text { font-size: 12px; color: var(--muted); }
+.upload-drop-text strong { color: var(--red); font-weight: 600; }
+.upload-btn {
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  padding: 14px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background .2s;
+}
+.upload-btn:hover { background: #7d0e1a; }
+.upload-btn:disabled { background: #ccc; cursor: not-allowed; }
+.upload-notice {
+  margin-top: 28px;
+  background: #fff8e1;
+  border-left: 3px solid #e6a800;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--mid);
+  line-height: 1.65;
+}
+.upload-notice .notice-title { font-weight: 700; color: #b37700; margin-bottom: 4px; font-size: 10.5px; letter-spacing: .5px; text-transform: uppercase; }
+#file-name { font-size: 11px; color: var(--green); margin-top: 10px; font-weight: 500; min-height: 16px; }
+#error-msg { font-size: 11px; color: var(--red2); margin-top: 8px; font-weight: 500; min-height: 16px; }
+
+/* ── DASHBOARD (hidden until data loaded) ── */
+#dashboard { display: none; }
+
+/* ── SHARED: HEADER ── */
+.hdr {
+  background: var(--red);
+  display: grid;
+  grid-template-columns: 220px 1fr 150px;
+  align-items: center;
+  padding: 10px 24px;
+}
+.hdr-logo .co { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: .5px; }
+.hdr-logo .tg { font-size: 9px; font-weight: 300; color: rgba(255,255,255,.8); letter-spacing: 1px; }
+.hdr-center { text-align: center; color: #fff; }
+.hdr-center .t1 { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.hdr-center .t2 { font-size: 10px; font-weight: 300; opacity: .85; margin-top: 2px; }
+.hdr-right { text-align: right; }
+.hdr-slide { color: #fff; font-size: 10px; opacity: .8; }
+.hdr-conf { background: var(--red2); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 4px 10px; margin-top: 4px; text-align: center; }
+
+/* ── SECTION BAND ── */
+.band { background: var(--dark); color: #fff; font-size: 10.5px; font-weight: 600; letter-spacing: 2px; padding: 7px 24px; text-transform: uppercase; }
+.band2 { background: #222; color: #fff; font-size: 10.5px; font-weight: 600; letter-spacing: 1.5px; padding: 7px 24px; text-transform: uppercase; }
+
+/* ── KPI TOP 4 ── */
+.kpi4 { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
+.kpi {
+  padding: 18px 20px 14px;
+  border-right: 1px solid var(--border);
+  background: #fff;
+}
+.kpi:last-child { border-right: none; }
+.kpi-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.kpi-val { font-size: 36px; font-weight: 700; color: var(--dark); line-height: 1; margin-bottom: 6px; }
+.kpi-sub { font-size: 10.5px; color: var(--muted); line-height: 1.5; min-height: 30px; }
+.kpi-tag { margin-top: 10px; padding: 6px 14px; font-size: 10.5px; font-weight: 600; text-align: center; letter-spacing: .3px; }
+.t-red   { background: var(--red);   color: #fff; }
+.t-green { background: var(--green); color: #fff; }
+.t-dark  { background: var(--char);  color: #fff; }
+.t-amber { background: #c97000;      color: #fff; }
+
+/* ── INSIGHT ROW ── */
+.insight4 { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
+.ins {
+  padding: 14px 16px;
+  border-right: 1px solid var(--border);
+  font-size: 11px; color: var(--mid); line-height: 1.55;
+}
+.ins:last-child { border-right: none; }
+.ins-icon { font-size: 15px; margin-bottom: 5px; display: block; }
+
+/* ── FINANCIAL PERF 5 CELLS ── */
+.fin5 { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 2px solid var(--border); }
+.fc {
+  padding: 14px 16px;
+  border-right: 1px solid var(--border);
+  background: #fff;
+}
+.fc:last-child { border-right: none; }
+.fc-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+.fc-big { font-size: 22px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+.fc-sub { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+.pbar { background: #e4e4e4; height: 6px; border-radius: 1px; margin-bottom: 6px; }
+.pbar-in { height: 6px; border-radius: 1px; }
+.pb-red { background: var(--red); } .pb-grn { background: var(--green); } .pb-amb { background: #c97000; }
+.badge { display: inline-block; padding: 3px 10px; font-size: 10px; font-weight: 600; }
+.b-red { background: var(--red); color: #fff; }
+.b-grn { background: var(--green); color: #fff; }
+.b-amb { background: #c97000; color: #fff; }
+.b-dark{ background: #444; color: #fff; }
+
+/* ── CHARTS SLIDE 2 ── */
+.chart2t { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+.chart2b { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid var(--border); }
+.cpanel { padding: 18px 20px; border-right: 1px solid var(--border); }
+.cpanel:last-child { border-right: none; }
+.cp-t { font-size: 12px; font-weight: 600; color: var(--dark); margin-bottom: 2px; }
+.cp-s { font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+
+/* ── P&L TABLE ── */
+.pl-wrap { border-bottom: 1px solid var(--border); overflow-x: auto; }
+.pl-sub { font-size: 10px; color: var(--muted); padding: 5px 24px 5px; background: #fafafa; border-bottom: 1px solid var(--border); }
+table.pl { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.pl th {
+  background: #1a1a1a; color: #fff;
+  padding: 7px 10px; text-align: right;
+  font-weight: 600; font-size: 10px; letter-spacing: .5px;
+}
+table.pl th:first-child, table.pl th:nth-child(2) { text-align: left; }
+table.pl td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: right; color: var(--mid);
+}
+table.pl td:first-child { text-align: center; color: var(--muted); font-size: 10px; width: 48px; }
+table.pl td:nth-child(2) { text-align: left; }
+.tr-sec td { background: var(--dark); color: #fff; font-weight: 600; font-size: 10.5px; letter-spacing: .8px; }
+.tr-sec td:first-child { color: #aaa; }
+.tr-tot td { font-weight: 700; color: var(--dark); background: #f5f5f5; border-top: 2px solid #ccc; border-bottom: 2px solid #ccc; }
+.tr-gp td  { font-weight: 700; color: var(--dark); background: #f0f0f0; border-top: 3px solid var(--red); border-bottom: 1px solid #ccc; }
+.tr-ebit td{ font-weight: 700; color: var(--dark); background: #fff; border-top: 2px solid var(--red); border-bottom: 2px solid var(--red); }
+.tr-ni td  { font-weight: 800; color: #fff !important; background: var(--dark); font-size: 12px; }
+.tr-ni td.neg, .tr-ni td.tr-ni-neg { color: #ffaaaa !important; }
+.tr-mgn td { color: var(--muted); font-style: italic; font-size: 10px; background: #fafafa; }
+.tr-other-hdr td { background: #444; color: #fff !important; font-size: 10px; font-weight: 600; letter-spacing: .5px; }
+.tr-sec td { background: var(--dark); color: #fff !important; font-weight: 600; font-size: 10.5px; letter-spacing: .8px; }
+.tr-sec td:first-child { color: #bbb !important; }
+.neg { color: var(--red2) !important; }
+.pos { color: var(--green) !important; }
+
+/* ── KEY OBS ── */
+.obs {
+  background: #f9f9f9; border-top: 3px solid var(--red);
+  padding: 14px 24px; font-size: 11px; color: var(--mid); line-height: 1.75;
+  border-bottom: 1px solid var(--border);
+}
+.obs strong { font-weight: 600; color: var(--dark); }
+
+/* ── SLIDE 5: ROADMAP ── */
+.ann-bar {
+  background: #f5f5f5; border-left: 4px solid var(--red);
+  padding: 10px 24px; font-size: 11px; color: var(--mid);
+  border-bottom: 1px solid var(--border);
+}
+.ann-bar span { font-weight: 600; color: var(--dark); }
+.tgt3 { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--border); }
+.tgt {
+  padding: 24px; border-right: 1px solid var(--border);
+}
+.tgt:last-child { border-right: none; }
+.tgt-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--red); text-transform: uppercase; margin-bottom: 8px; }
+.tgt-val { font-size: 48px; font-weight: 800; color: var(--dark); line-height: 1; margin-bottom: 10px; }
+.tgt-det { font-size: 11px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+.tgt-cagr { background: var(--char); color: #fff; font-size: 11px; padding: 8px 14px; text-align: center; }
+.mgn3 { display: grid; grid-template-columns: repeat(3,1fr); }
+.mgn { background: var(--red); color: #fff; padding: 20px 24px; border-right: 1px solid rgba(255,255,255,.2); }
+.mgn:last-child { border-right: none; }
+.mgn-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; opacity: .85; margin-bottom: 6px; }
+.mgn-val { font-size: 40px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.mgn-cur { font-size: 11px; opacity: .8; }
+
+/* ── PCF DASHBOARD ── */
+.pcf-section { padding: 24px; }
+.pcf-title-bar { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.pcf-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); display: inline-block; }
+.pcf-summary-btn { margin-left: auto; background: var(--red); color: #fff; border: none; padding: 6px 16px; font-family: var(--font); font-size: 11px; font-weight: 600; cursor: pointer; }
+.pcf-kpi4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.pcf-kpi { background: #faf7f2; border: 1px solid #e8e0d0; border-radius: 2px; padding: 14px 16px; }
+.pcf-kpi-icon { font-size: 16px; color: #b8936a; margin-bottom: 6px; }
+.pcf-kpi-lbl { font-size: 10px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+.pcf-kpi-val { font-size: 28px; font-weight: 700; color: var(--dark); line-height: 1; }
+.pcf-kpi-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.pcf-kpi-bar { height: 3px; background: #e0d5c5; margin-top: 10px; border-radius: 2px; }
+.pcf-kpi-bar-in { height: 3px; border-radius: 2px; }
+.pcf-pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.pcf-pay-box { background: #faf7f2; border: 1px solid #e8e0d0; padding: 16px; }
+.pcf-pay-title { font-size: 11px; font-weight: 600; color: var(--dark); margin-bottom: 12px; }
+.pcf-pay-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.pcf-dot-red { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.pcf-dot-tan { width: 8px; height: 8px; border-radius: 50%; background: #c8b89a; flex-shrink: 0; }
+.pcf-pay-label { font-size: 11px; color: var(--mid); flex: 1; }
+.pcf-pay-count { font-size: 11px; color: var(--muted); }
+.pcf-pay-pct { font-size: 11px; font-weight: 600; color: var(--dark); margin-left: 4px; }
+.pcf-progress { flex: 1; height: 8px; background: #e0d5c5; border-radius: 4px; overflow: hidden; position: relative; margin: 0 8px; }
+.pcf-progress-in { height: 100%; border-radius: 4px; }
+.pcf-table-right { background: #faf7f2; border: 1px solid #e8e0d0; padding: 16px; }
+.pcf-tbl-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f0e8d8; font-size: 11.5px; }
+.pcf-tbl-row:last-child { border-bottom: none; font-weight: 700; }
+.pcf-segment-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.pcf-seg-band { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pcf-seg-label { font-size: 11px; color: var(--mid); flex: 1; }
+.pcf-seg-count { font-size: 11px; color: var(--muted); }
+.pcf-seg-val { font-size: 11px; font-weight: 600; color: var(--dark); margin-left: 8px; }
+.pcf-seg-pct { font-size: 10px; color: var(--muted); margin-left: 4px; }
+.pcf-tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pcf-tier { border: 1px solid; border-radius: 2px; padding: 16px; }
+.pcf-tier-c1 { background: #fff8f0; border-color: #c8936a; }
+.pcf-tier-c2 { background: #fffdf5; border-color: #c8b050; }
+.pcf-tier-badge { display: inline-block; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 13px; text-align: center; line-height: 32px; margin-bottom: 8px; }
+.pcf-tier-badge-c1 { background: #c8936a; }
+.pcf-tier-badge-c2 { background: #c8b050; }
+.pcf-tier-count { font-size: 10px; color: var(--muted); float: right; margin-top: 4px; }
+.pcf-tier-val { font-size: 28px; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
+.pcf-tier-sub { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+.pcf-tier-bar { height: 5px; background: #e0d5c5; border-radius: 2px; }
+.pcf-tier-bar-in { height: 5px; border-radius: 2px; }
+
+/* ── DIVIDER ── */
+.div-line { height: 6px; background: #eee; border-top: 2px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ -->
+<!--  UPLOAD SCREEN                            -->
+<!-- ══════════════════════════════════════════ -->
+<div id="upload-screen">
+  <div class="upload-logo">UW GROUP</div>
+  <div class="upload-tagline">Independent Financial Planning · Family Office</div>
+
+  <div class="upload-card" style="width:560px;">
+    <div class="upload-title">BOD Executive Dashboard</div>
+    <div class="upload-sub">
+      วาง 1–2 ไฟล์พร้อมกัน หรือเลือกทีละไฟล์ก็ได้<br>
+      ระบบจะ detect อัตโนมัติว่าไฟล์ไหนเป็น BOD ไฟล์ไหนเป็น PCF
+    </div>
+
+    <!-- Single drop zone — multiple files -->
+    <div id="drop-zone" style="
+      border: 2px dashed #d0d0d0;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-bottom: 16px;
+      position: relative;
+    ">
+      <input type="file" id="file-input" accept=".xlsx,.xls" multiple
+        style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" />
+      <div style="font-size:36px;opacity:.35;margin-bottom:10px;"></div>
+      <div style="font-size:13px;color:var(--mid);margin-bottom:4px;">
+        ลากไฟล์มาวางที่นี่ หรือ <strong style="color:var(--red);">คลิกเพื่อเลือก</strong>
+      </div>
+      <div style="font-size:10px;color:var(--muted);">รองรับ .xlsx · เลือกได้ 1 หรือ 2 ไฟล์พร้อมกัน</div>
+    </div>
+
+    <!-- File status list -->
+    <div id="file-status" style="margin-bottom:16px;min-height:48px;"></div>
+
+    <div id="error-msg" style="font-size:11px;color:var(--red2);margin-bottom:10px;min-height:16px;"></div>
+
+    <button class="upload-btn" id="upload-btn" disabled onclick="processFiles()">
+      แสดง Dashboard
+    </button>
+
+    <div class="upload-notice" style="margin-top:20px;">
+      <div class="notice-title"> หมายเหตุ</div>
+      ข้อมูลทั้งหมดประมวลผลภายใน browser เท่านั้น ไม่มีการส่งออกภายนอก<br>
+      ระบบ detect ไฟล์อัตโนมัติจากโครงสร้างข้อมูล — ไม่ต้องใช้ชื่อไฟล์เฉพาะ<br>
+      หากมีเฉพาะไฟล์ BOD ระบบจะแสดง Dashboard โดยไม่มีส่วน Personal Consult Fee
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--  DASHBOARD                                -->
+<!-- ══════════════════════════════════════════ -->
+<div id="dashboard">
+
+  <!-- ── HEADER ── -->
+  <div class="hdr">
+    <div class="hdr-logo">
+      <div class="co">UW GROUP</div>
+      <div class="tg">INDEPENDENT FINANCIAL PLANNING · FAMILY OFFICE</div>
+    </div>
+    <div class="hdr-center">
+      <div class="t1">BOARD OF DIRECTORS — EXECUTIVE DASHBOARD</div>
+      <div class="t2" id="hdr-sub">Consolidated · Company B · C · V · FY2026 · As of — (M— YTD)</div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-slide">STRICTLY CONFIDENTIAL</div>
+      <div class="hdr-conf">STRICTLY CONFIDENTIAL</div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION 0: STRATEGIC ROADMAP FY2030 ═══════ -->
+  <div class="band">Strategic Roadmap &nbsp;·&nbsp; FY2030 Vision &nbsp;·&nbsp; 4-Year Horizon</div>
+  <div class="ann-bar" id="ann-bar">—</div>
+  <div class="tgt3">
+    <div class="tgt">
+      <div class="tgt-lbl">FY2030 Revenue Target</div>
+      <div class="tgt-val">฿87.6M</div>
+      <div class="tgt-det" id="tgt-rev-det">—</div>
+      <div class="tgt-cagr" id="tgt-rev-cagr">—</div>
+    </div>
+    <div class="tgt">
+      <div class="tgt-lbl">FY2030 Net Income Target</div>
+      <div class="tgt-val">฿25.3M</div>
+      <div class="tgt-det" id="tgt-ni-det">—</div>
+      <div class="tgt-cagr" id="tgt-ni-cagr">—</div>
+    </div>
+    <div class="tgt">
+      <div class="tgt-lbl">FY2030 Gross Profit Target</div>
+      <div class="tgt-val">฿44.7M</div>
+      <div class="tgt-det" id="tgt-gp-det">—</div>
+      <div class="tgt-cagr" id="tgt-gp-cagr">—</div>
+    </div>
+  </div>
+  <div class="mgn3">
+    <div class="mgn">
+      <div class="mgn-lbl">GP MARGIN</div>
+      <div class="mgn-val">51.0%</div>
+      <div class="mgn-cur" id="mgn-gp-cur">vs Current —</div>
+    </div>
+    <div class="mgn">
+      <div class="mgn-lbl">EBIT MARGIN</div>
+      <div class="mgn-val">51.0%</div>
+      <div class="mgn-cur" id="mgn-ebit-cur">vs Current —</div>
+    </div>
+    <div class="mgn">
+      <div class="mgn-lbl">NET MARGIN</div>
+      <div class="mgn-val">29.0%</div>
+      <div class="mgn-cur" id="mgn-ni-cur">vs Current —</div>
+    </div>
+  </div>
+
+  <div class="div-line"></div>
+
+  <!-- ═══════ SECTION 1: KPI 4 CARDS ═══════ -->
+  <div class="kpi4">
+    <div class="kpi">
+      <div class="kpi-lbl">YTD Total Revenue</div>
+      <div class="kpi-val" id="k-rev">—</div>
+      <div class="kpi-sub" id="k-rev-sub">—</div>
+      <div class="kpi-tag t-amber" id="k-rev-tag">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">YTD Gross Profit</div>
+      <div class="kpi-val" id="k-gp">—</div>
+      <div class="kpi-sub" id="k-gp-sub">—</div>
+      <div class="kpi-tag t-red" id="k-gp-tag">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">YTD Net Income</div>
+      <div class="kpi-val" id="k-ni">—</div>
+      <div class="kpi-sub" id="k-ni-sub">—</div>
+      <div class="kpi-tag t-green" id="k-ni-tag">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">FY2030 Revenue Target</div>
+      <div class="kpi-val" id="k-2030">—</div>
+      <div class="kpi-sub" id="k-2030-sub">—</div>
+      <div class="kpi-tag t-dark">4-Year Horizon</div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION 2: INSIGHT ROW ═══════ -->
+  <div class="insight4">
+    <div class="ins">
+      <span class="ins-icon"></span>
+      <span id="ins-1">—</span>
+    </div>
+    <div class="ins">
+      <span class="ins-icon"></span>
+      <span id="ins-2">—</span>
+    </div>
+    <div class="ins">
+      <span class="ins-icon"></span>
+      <span id="ins-3">—</span>
+    </div>
+    <div class="ins">
+      <span class="ins-icon"></span>
+      <span id="ins-4">—</span>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION 3: FINANCIAL PERFORMANCE ═══════ -->
+  <div class="band2">Financial Performance &nbsp;·&nbsp; YTD vs Budget &nbsp;<span id="fin-period">(M— of M12)</span></div>
+  <div class="fin5">
+    <div class="fc">
+      <div class="fc-lbl">YTD Revenue</div>
+      <div class="fc-big" id="f-rev">—</div>
+      <div class="fc-sub" id="f-rev-sub">—</div>
+      <div class="pbar"><div class="pbar-in pb-amb" id="pb-rev" style="width:0%"></div></div>
+      <span class="badge b-amb" id="b-rev">—</span>
+      <span style="font-size:10px;color:var(--muted);margin-left:6px;" id="f-rev-mo">—</span>
+    </div>
+    <div class="fc">
+      <div class="fc-lbl">Gross Profit</div>
+      <div class="fc-big" id="f-gp">—</div>
+      <div class="fc-sub" id="f-gp-sub">—</div>
+      <div class="pbar"><div class="pbar-in pb-red" id="pb-gp" style="width:0%"></div></div>
+      <span class="badge b-red" id="b-gp">—</span>
+    </div>
+    <div class="fc">
+      <div class="fc-lbl">EBIT (Operating Profit)</div>
+      <div class="fc-big" id="f-ebit">—</div>
+      <div class="fc-sub" id="f-ebit-sub">—</div>
+      <div class="pbar"><div class="pbar-in pb-red" id="pb-ebit" style="width:0%"></div></div>
+      <span class="badge b-red" id="b-ebit">—</span>
+    </div>
+    <div class="fc">
+      <div class="fc-lbl">Net Income</div>
+      <div class="fc-big" id="f-ni">—</div>
+      <div class="fc-sub" id="f-ni-sub">—</div>
+      <div class="pbar"><div class="pbar-in pb-red" id="pb-ni" style="width:0%"></div></div>
+      <span class="badge b-red" id="b-ni">—</span>
+    </div>
+    <div class="fc">
+      <div class="fc-lbl">Total Costs (YTD)</div>
+      <div class="fc-big" id="f-cost">—</div>
+      <div class="fc-sub" id="f-cost-sub">—</div>
+      <div class="pbar"><div class="pbar-in pb-grn" id="pb-cost" style="width:0%"></div></div>
+      <span class="badge b-grn" id="b-cost">—</span>
+      <span style="font-size:10px;color:var(--muted);margin-left:6px;" id="b-cost2">—</span>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION 4: CHARTS ═══════ -->
+  <div class="div-line"></div>
+  <div class="hdr" style="margin-top:0;">
+    <div class="hdr-logo"><div class="co">UW GROUP</div><div class="tg">INDEPENDENT FINANCIAL PLANNING · FAMILY OFFICE</div></div>
+    <div class="hdr-center"><div class="t1">BOARD OF DIRECTORS — EXECUTIVE DASHBOARD</div><div class="t2" id="hdr-sub2">—</div></div>
+    <div class="hdr-right"><div class="hdr-slide">STRICTLY CONFIDENTIAL</div><div class="hdr-conf">STRICTLY CONFIDENTIAL</div></div>
+  </div>
+  <div class="band">Revenue &amp; Cost Analysis &nbsp;·&nbsp; <span id="chart-period">Jan–Apr 2026</span> &nbsp;·&nbsp; THB</div>
+
+  <div class="chart2t">
+    <div class="cpanel">
+      <div class="cp-t">Monthly Revenue vs Cost vs Net Income</div>
+      <div class="cp-s" id="cp-s1">—</div>
+      <canvas id="cRevCost" height="200"></canvas>
+    </div>
+    <div class="cpanel" style="border-right:none;">
+      <div class="cp-t">Revenue Breakdown by Stream (YTD)</div>
+      <div class="cp-s" id="cp-s2">—</div>
+      <canvas id="cRevStream" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="chart2b">
+    <div class="cpanel" style="border-right:1px solid var(--border);">
+      <div class="cp-t">P&amp;L Waterfall — YTD</div>
+      <div class="cp-s">Revenue to Net Income bridge</div>
+      <canvas id="cWaterfall" height="260"></canvas>
+    </div>
+    <div class="cpanel" style="border-right:1px solid var(--border);">
+      <div class="cp-t">Margin Profile by Month</div>
+      <div class="cp-s">GP%, EBIT% — monthly</div>
+      <canvas id="cMargin" height="260"></canvas>
+    </div>
+    <div class="cpanel" style="border-right:none;">
+      <div class="cp-t">Cost Structure — YTD</div>
+      <div class="cp-s" id="cp-s5">CoS · SG&amp;A breakdown</div>
+      <canvas id="cDonut" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION 5: P&L TABLE (Revenue + CoS + GP) ═══════ -->
+  <div class="div-line"></div>
+  <div class="hdr">
+    <div class="hdr-logo"><div class="co">UW GROUP</div><div class="tg">INDEPENDENT FINANCIAL PLANNING · FAMILY OFFICE</div></div>
+    <div class="hdr-center"><div class="t1">BOARD OF DIRECTORS — EXECUTIVE DASHBOARD</div><div class="t2" id="hdr-sub3">—</div></div>
+    <div class="hdr-right"><div class="hdr-slide">STRICTLY CONFIDENTIAL</div><div class="hdr-conf">STRICTLY CONFIDENTIAL</div></div>
+  </div>
+  <div class="band">Consolidated P&amp;L Statement &nbsp;·&nbsp; YTD M— vs Budget vs FY2030 Target</div>
+  <div class="pl-sub" id="pl-sub1">UW GROUP · Company B · C · V · FY2026 · All figures in Thai Baht (THB)</div>
+  <div class="pl-wrap">
+    <table class="pl" id="tbl-rev"></table>
+  </div>
+
+  <!-- ═══════ SECTION 6: P&L TABLE (SG&A + EBIT + NI) ═══════ -->
+  <div class="div-line"></div>
+  <div class="hdr">
+    <div class="hdr-logo"><div class="co">UW GROUP</div><div class="tg">INDEPENDENT FINANCIAL PLANNING · FAMILY OFFICE</div></div>
+    <div class="hdr-center"><div class="t1">BOARD OF DIRECTORS — EXECUTIVE DASHBOARD</div><div class="t2" id="hdr-sub4">—</div></div>
+    <div class="hdr-right"><div class="hdr-slide">STRICTLY CONFIDENTIAL</div><div class="hdr-conf">STRICTLY CONFIDENTIAL</div></div>
+  </div>
+  <div class="band">Consolidated P&amp;L Statement &nbsp;·&nbsp; SG&amp;A · EBIT · Other Items · Net Income</div>
+  <div class="pl-sub">Continuation from above · All figures in Thai Baht (THB)</div>
+  <div class="pl-wrap">
+    <table class="pl" id="tbl-sga"></table>
+  </div>
+
+  <!-- KEY OBSERVATIONS -->
+  <div class="obs" id="obs-box">—</div>
+
+  <!-- ═══════ SECTION 7: PERSONAL CONSULT FEE ═══════ -->
+  <div class="div-line"></div>
+  <div class="hdr">
+    <div class="hdr-logo"><div class="co">UW GROUP</div><div class="tg">INDEPENDENT FINANCIAL PLANNING · FAMILY OFFICE</div></div>
+    <div class="hdr-center"><div class="t1">BOARD OF DIRECTORS — EXECUTIVE DASHBOARD</div><div class="t2">Personal Consult Fee Summary</div></div>
+    <div class="hdr-right"><div class="hdr-slide">STRICTLY CONFIDENTIAL</div><div class="hdr-conf">STRICTLY CONFIDENTIAL</div></div>
+  </div>
+
+  <!-- PCF: waiting for file -->
+  <div id="pcf-waiting" style="background:#fff8e1;border-left:5px solid #e6a800;padding:20px 24px;font-size:11px;color:var(--mid);line-height:1.8;">
+    <strong style="color:#b37700;"> Personal Consult Fee — ยังไม่ได้รับไฟล์ข้อมูล</strong><br>
+    กรุณาอัปโหลดไฟล์ Personal Consult Fee (ไฟล์ที่ 2) ที่หน้า Upload เพื่อแสดงผลในส่วนนี้
+  </div>
+
+  <!-- PCF: actual dashboard (hidden until file loaded) -->
+  <div id="pcf-dashboard" style="display:none;">
+    <div class="pcf-section">
+      <div class="pcf-title-bar">
+        <span class="pcf-dot"></span>
+        Personal Consult Fee
+        <button class="pcf-summary-btn">สรุปภาพรวม</button>
+      </div>
+
+      <!-- KPI 4 -->
+      <div class="pcf-kpi4">
+        <div class="pcf-kpi">
+          <div class="pcf-kpi-icon"></div>
+          <div class="pcf-kpi-lbl">จำนวนเคส</div>
+          <div class="pcf-kpi-val" id="pcf-total-cases">—</div>
+          <div class="pcf-kpi-sub">เคสทั้งหมด</div>
+          <div class="pcf-kpi-bar"><div class="pcf-kpi-bar-in" id="pcf-bar-cases" style="width:100%;background:var(--red);"></div></div>
+        </div>
+        <div class="pcf-kpi">
+          <div class="pcf-kpi-icon"></div>
+          <div class="pcf-kpi-lbl">มูลค่ารวม</div>
+          <div class="pcf-kpi-val" id="pcf-total-val">—</div>
+          <div class="pcf-kpi-sub">บาท</div>
+          <div class="pcf-kpi-bar"><div class="pcf-kpi-bar-in" id="pcf-bar-val" style="width:100%;background:var(--red);"></div></div>
+        </div>
+        <div class="pcf-kpi">
+          <div class="pcf-kpi-icon"></div>
+          <div class="pcf-kpi-lbl">ชำระแล้ว</div>
+          <div class="pcf-kpi-val" id="pcf-paid-cases">—</div>
+          <div class="pcf-kpi-sub" id="pcf-paid-val">—</div>
+          <div class="pcf-kpi-bar"><div class="pcf-kpi-bar-in" id="pcf-bar-paid" style="background:var(--red);"></div></div>
+        </div>
+        <div class="pcf-kpi">
+          <div class="pcf-kpi-icon"></div>
+          <div class="pcf-kpi-lbl">ค้างชำระ</div>
+          <div class="pcf-kpi-val" id="pcf-out-cases">—</div>
+          <div class="pcf-kpi-sub" id="pcf-out-val">—</div>
+          <div class="pcf-kpi-bar"><div class="pcf-kpi-bar-in" id="pcf-bar-out" style="background:#c8b89a;"></div></div>
+        </div>
+      </div>
+
+      <!-- Payment status -->
+      <div class="pcf-pay-grid">
+        <div class="pcf-pay-box">
+          <div class="pcf-pay-title">สถานะการชำระเงิน</div>
+          <div class="pcf-pay-row">
+            <span class="pcf-dot-red"></span>
+            <span class="pcf-pay-label">ชำระแล้ว</span>
+            <span class="pcf-pay-count" id="pcf-s-paid-count">—</span>
+            <div class="pcf-progress"><div class="pcf-progress-in" id="pcf-prog-paid" style="background:var(--red);"></div></div>
+            <span class="pcf-pay-pct" id="pcf-s-paid-pct">—</span>
+          </div>
+          <div class="pcf-pay-row">
+            <span class="pcf-dot-tan"></span>
+            <span class="pcf-pay-label">ค้างชำระ</span>
+            <span class="pcf-pay-count" id="pcf-s-out-count">—</span>
+            <div class="pcf-progress"><div class="pcf-progress-in" id="pcf-prog-out" style="background:#c8b89a;"></div></div>
+            <span class="pcf-pay-pct" id="pcf-s-out-pct">—</span>
+          </div>
+        </div>
+        <div class="pcf-table-right">
+          <div class="pcf-tbl-row"><span>ชำระแล้ว</span><span id="pcf-t-paid">—</span></div>
+          <div class="pcf-tbl-row"><span>ค้างชำระ</span><span id="pcf-t-out">—</span></div>
+          <div class="pcf-tbl-row" style="margin-top:4px;padding-top:8px;border-top:2px solid #c8b89a;"><span>รวมทั้งสิ้น</span><span id="pcf-t-total">—</span></div>
+        </div>
+      </div>
+
+      <!-- First Year vs Review Year -->
+      <div style="background:#faf7f2;border:1px solid #e8e0d0;padding:16px;margin-bottom:16px;">
+        <div class="pcf-pay-title">แบ่งตามประเภท — FIRST YEAR &amp; REVIEW YEAR</div>
+        <div class="pcf-pay-row" style="margin-bottom:14px;">
+          <span class="pcf-dot-red"></span>
+          <span class="pcf-pay-label">Review Year</span>
+          <span class="pcf-pay-count" id="pcf-ry-count">—</span>
+          <div class="pcf-progress" style="height:12px;border-radius:6px;"><div class="pcf-progress-in" id="pcf-prog-ry" style="background:var(--red);height:12px;border-radius:6px;"></div></div>
+          <span class="pcf-pay-pct" id="pcf-ry-val">—</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:4px;" id="pcf-ry-pct">—</span>
+        </div>
+        <div class="pcf-pay-row">
+          <span class="pcf-dot-tan"></span>
+          <span class="pcf-pay-label">First Year</span>
+          <span class="pcf-pay-count" id="pcf-fy-count">—</span>
+          <div class="pcf-progress" style="height:12px;border-radius:6px;"><div class="pcf-progress-in" id="pcf-prog-fy" style="background:#c8b89a;height:12px;border-radius:6px;"></div></div>
+          <span class="pcf-pay-pct" id="pcf-fy-val">—</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:4px;" id="pcf-fy-pct">—</span>
+        </div>
+      </div>
+
+      <!-- Tier C1 vs C2 -->
+      <div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">แบ่งตาม TIER — C1 &amp; C2</div>
+      <div class="pcf-tier-grid">
+        <div class="pcf-tier pcf-tier-c1">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+            <span class="pcf-tier-badge pcf-tier-badge-c1">C1</span>
+            <span class="pcf-tier-count" id="pcf-c1-count">—</span>
+          </div>
+          <div class="pcf-tier-val" id="pcf-c1-val">—</div>
+          <div class="pcf-tier-sub" id="pcf-c1-pct">บาท · สัดส่วน —</div>
+          <div class="pcf-tier-bar"><div class="pcf-tier-bar-in" id="pcf-bar-c1" style="background:#c8936a;"></div></div>
+        </div>
+        <div class="pcf-tier pcf-tier-c2">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+            <span class="pcf-tier-badge pcf-tier-badge-c2">C2</span>
+            <span class="pcf-tier-count" id="pcf-c2-count">—</span>
+          </div>
+          <div class="pcf-tier-val" id="pcf-c2-val">—</div>
+          <div class="pcf-tier-sub" id="pcf-c2-pct">บาท · สัดส่วน —</div>
+          <div class="pcf-tier-bar"><div class="pcf-tier-bar-in" id="pcf-bar-c2" style="background:#c8b050;"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script>
+// ── GLOBALS ──
+let workbook    = null;  // BOD
+let workbookPCF = null;  // PCF
+let bodReady    = false;
+let pcfReady    = false;
+let charts      = {};
+
+// ── DETECT FILE TYPE from content ──
+function isBODFile(wb) {
+  for (const name of wb.SheetNames) {
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, defval:null });
+    if (raw.some(r => r && r.some(c => c && String(c).toUpperCase().includes('TOTAL REVENUE')))) return true;
+  }
+  return false;
+}
+function isPCFFile(wb) {
+  for (const name of wb.SheetNames) {
+    // Check sheet name first
+    if (name.toLowerCase().includes('consult') || name.toLowerCase().includes('fee')) return true;
+    // Then check cell values in header rows
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[name], { header:1, defval:null });
+    const top = raw.slice(0, 5);
+    if (top.some(r => r && r.some(c => c && String(c).toLowerCase().includes('consult')))) return true;
+    if (top.some(r => r && r.some(c => c && String(c) === 'Segment'))) return true;
+  }
+  return false;
+}
+
+// ── READ FILE → ArrayBuffer → parse ──
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(XLSX.read(e.target.result, { type: 'array' }));
+    reader.onerror = () => reject(new Error('อ่านไฟล์ไม่ได้'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ── HANDLE FILE LIST (1 or 2 files) ──
+async function handleFiles(fileList) {
+  const errEl    = document.getElementById('error-msg');
+  const statusEl = document.getElementById('file-status');
+  errEl.textContent = '';
+  statusEl.innerHTML = '';
+
+  const files = Array.from(fileList).filter(f => f.name.match(/\.(xlsx|xls)$/i));
+  if (files.length === 0) {
+    errEl.textContent = ' กรุณาเลือกไฟล์ .xlsx หรือ .xls เท่านั้น';
+    return;
+  }
+
+  for (const f of files.slice(0, 2)) {
+    try {
+      const wb = await readFile(f);
+      if (isBODFile(wb)) {
+        workbook = wb;
+        bodReady = true;
+        addStatus(statusEl, f.name, 'BOD — Consolidated P&L', '');
+      } else if (isPCFFile(wb)) {
+        workbookPCF = wb;
+        pcfReady = true;
+        addStatus(statusEl, f.name, 'Personal Consult Fee', '');
+      } else {
+        // ถ้า detect ไม่ได้ ให้ใส่เป็น BOD fallback
+        workbook = wb;
+        bodReady = true;
+        addStatus(statusEl, f.name, 'BOD (auto-assigned)', '');
+      }
+    } catch(e) {
+      errEl.textContent = ' อ่านไฟล์ ' + f.name + ' ไม่ได้';
+    }
+  }
+
+  document.getElementById('upload-btn').disabled = !bodReady;
+}
+
+function addStatus(container, fname, label, icon) {
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f5f5f5;border-left:3px solid #9a1220;margin-bottom:6px;font-size:11px;';
+  el.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;background:#9a1220;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="2,7 5.5,10.5 12,3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="flex:1;"><div style="font-weight:600;color:#1a1a1a;font-size:11px;">${label}</div><div style="color:#6b6b6d;font-size:10px;margin-top:1px;">${fname}</div></div>`;
+  container.appendChild(el);
+}
+
+// ── WIRE UP drop zone + file input ──
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.style.borderColor = '#9a1220'; dropZone.style.background = '#fff5f5'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#d0d0d0'; dropZone.style.background = ''; });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#d0d0d0';
+  dropZone.style.background = '';
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFiles(e.target.files);
+});
+
+function processFiles() {
+  if (!bodReady || !workbook) return;
+  const errEl = document.getElementById('error-msg');
+  errEl.textContent = '';
+
+  // ── Detect BOD sheet: ใช้ sheet แรกที่มี row "TOTAL REVENUE" หรือ "Code" ──
+  let bodSheet = null;
+  for (const name of workbook.SheetNames) {
+    const raw = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header:1, defval:null });
+    const found = raw.some(r => r && r.some(c => c && String(c).includes('TOTAL REVENUE')));
+    if (found) { bodSheet = name; break; }
+  }
+  // fallback: sheet แรก
+  if (!bodSheet) bodSheet = workbook.SheetNames[0];
+
+  try {
+    const raw = XLSX.utils.sheet_to_json(workbook.Sheets[bodSheet], { header:1, defval:null });
+    const d = parseSheet(raw);
+    renderDashboard(d);
+
+    // ── Detect PCF sheet: ใช้ sheet ที่มี "Consult Fee" หรือ "Client" ──
+    if (pcfReady && workbookPCF) {
+      let pcfSheet = null;
+      for (const name of workbookPCF.SheetNames) {
+        const raw2 = XLSX.utils.sheet_to_json(workbookPCF.Sheets[name], { header:1, defval:null });
+        const found = raw2.some(r => r && r.some(c => c && String(c).toLowerCase().includes('consult')));
+        if (found) { pcfSheet = name; break; }
+      }
+      if (!pcfSheet) pcfSheet = workbookPCF.SheetNames[0];
+      const rawPCF = XLSX.utils.sheet_to_json(workbookPCF.Sheets[pcfSheet], { header:1, defval:null });
+      renderPCF(rawPCF);
+    }
+
+    document.getElementById('upload-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    window.scrollTo(0, 0);
+  } catch(err) {
+    errEl.textContent = ' ประมวลผลไม่สำเร็จ: ' + err.message;
+    console.error(err);
+  }
+}
+
+// ── PARSE SHEET ──
+function parseSheet(raw) {
+  // Find header row (has 'Code' or 'Jan')
+  let headerRow = -1;
+  for (let i = 0; i < raw.length; i++) {
+    const r = raw[i];
+    if (r && (r[0] === 'Code' || (r[3] && String(r[3]).toLowerCase().includes('jan')))) {
+      headerRow = i;
+      break;
+    }
+  }
+  if (headerRow < 0) throw new Error('ไม่พบ header row');
+
+  // Col indices: Code=0, Name=1, Budget=2, Jan=3,Feb=4,Mar=5,Apr=6,May=7,...Dec=14, YTD=15, FYBgt=16, Var=17, VarPct=18, FY30=19
+  const COL = { code:0, name:1, bgt:2, jan:3, feb:4, mar:5, apr:6, may:7, jun:8, jul:9, aug:10, sep:11, oct:12, nov:13, dec:14, ytd:15, fybgt:16, var:17, varpct:18, fy30:19 };
+
+  // Find which months have data
+  const monthCols = [COL.jan, COL.feb, COL.mar, COL.apr, COL.may, COL.jun, COL.jul, COL.aug, COL.sep, COL.oct, COL.nov, COL.dec];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Determine active months from TOTAL REVENUE row
+  let activeMths = 0;
+  for (let i = headerRow+1; i < raw.length; i++) {
+    const r = raw[i];
+    if (r && r[COL.name] && String(r[COL.name]).includes('TOTAL REVENUE')) {
+      for (let m = 0; m < 12; m++) {
+        if (r[monthCols[m]] != null && r[monthCols[m]] !== 0) activeMths = m + 1;
+      }
+      break;
+    }
+  }
+  if (activeMths === 0) activeMths = 4;
+
+  // Extract row by code or name keyword
+  function getRow(keyword) {
+    for (let i = headerRow+1; i < raw.length; i++) {
+      const r = raw[i];
+      if (!r) continue;
+      const code = r[COL.code] ? String(r[COL.code]).trim() : '';
+      const name = r[COL.name] ? String(r[COL.name]).trim() : '';
+      if (code === keyword || name.toUpperCase().includes(keyword.toUpperCase())) return r;
+    }
+    return null;
+  }
+
+  function getRowsBySection(startKeyword, endKeyword) {
+    let rows = [], inSection = false;
+    for (let i = headerRow+1; i < raw.length; i++) {
+      const r = raw[i];
+      if (!r) continue;
+      const name = r[COL.name] ? String(r[COL.name]).trim() : '';
+      if (name.toUpperCase().includes(startKeyword.toUpperCase())) { inSection = true; continue; }
+      if (inSection && endKeyword && name.toUpperCase().includes(endKeyword.toUpperCase())) break;
+      if (inSection && r[COL.code]) rows.push(r);
+    }
+    return rows;
+  }
+
+  const n = v => (v == null ? 0 : Number(v));
+
+  // Key totals
+  const totRevRow  = getRow('TOTAL REVENUE');
+  const totCosRow  = getRow('TOTAL COST OF SERVICE');
+  const gpRow      = getRow('GROSS PROFIT');
+  const totSgaRow  = getRow('TOTAL SG&A') || getRow('TOTAL SGA');
+  const ebitRow    = getRow('OPERATING PROFIT');
+  const niRow      = getRow('NET INCOME');
+  const gpMgnRow   = getRow('Gross Profit Margin');
+  const ebitMgnRow = getRow('EBIT Margin');
+  const niMgnRow   = getRow('Net Profit Margin');
+  const oiRow      = getRow('OI');
+  const oeRow      = getRow('OE');
+  const fcRow      = getRow('FC');
+  const taxRow     = getRow('TAX');
+
+  // Monthly arrays (active months only)
+  function getMthArr(row) {
+    if (!row) return Array(activeMths).fill(0);
+    return monthCols.slice(0, activeMths).map(c => n(row[c]));
+  }
+
+  const mthRev  = getMthArr(totRevRow);
+  const mthCos  = getMthArr(totCosRow);
+  const mthSga  = getMthArr(totSgaRow);
+  const mthGp   = getMthArr(gpRow);
+  const mthEbit = getMthArr(ebitRow);
+  const mthNi   = getMthArr(niRow);
+  const mthGpM  = getMthArr(gpMgnRow).map(v => v > 1 ? v : v * 100);
+  const mthEbitM= getMthArr(ebitMgnRow).map(v => v > 1 ? v : v * 100);
+
+  const mthLabels = monthNames.slice(0, activeMths);
+
+  // YTD values
+  const ytdRev  = n(totRevRow?.[COL.ytd]);
+  const ytdCos  = n(totCosRow?.[COL.ytd]);
+  const ytdGp   = n(gpRow?.[COL.ytd]);
+  const ytdSga  = n(totSgaRow?.[COL.ytd]);
+  const ytdEbit = n(ebitRow?.[COL.ytd]);
+  const ytdNi   = n(niRow?.[COL.ytd]);
+  const ytdCost = ytdCos + ytdSga;
+
+  // Margins
+  const gpMgnYtd   = ytdRev > 0 ? ytdGp / ytdRev * 100 : 0;
+  const ebitMgnYtd = ytdRev > 0 ? ytdEbit / ytdRev * 100 : 0;
+  const niMgnYtd   = ytdRev > 0 ? ytdNi / ytdRev * 100 : 0;
+
+  // Budgets
+  const bgtRev  = n(totRevRow?.[COL.fybgt]);
+  const bgtCos  = n(totCosRow?.[COL.fybgt]);
+  const bgtGp   = n(gpRow?.[COL.fybgt]);
+  const bgtSga  = n(totSgaRow?.[COL.fybgt]);
+  const bgtEbit = n(ebitRow?.[COL.fybgt]);
+  const bgtNi   = n(niRow?.[COL.fybgt]);
+
+  // FY2030 targets
+  const fy30Rev  = 87600000;
+  const fy30Ni   = 25300000;
+  const fy30Gp   = 44700000;
+
+  // Annualised run-rate
+  const annRev = ytdRev / activeMths * 12;
+  const annNi  = ytdNi  / activeMths * 12;
+  const annGp  = ytdGp  / activeMths * 12;
+
+  // Required CAGR (4 years)
+  const cagr = (target, base) => base > 0 ? Math.round((Math.pow(target / base, 0.25) - 1) * 100) : 0;
+  const cagrRev = cagr(fy30Rev, annRev);
+  const cagrNi  = cagr(fy30Ni, annNi);
+  const cagrGp  = cagr(fy30Gp, annGp);
+
+  // Revenue streams (R-codes)
+  const revRows = getRowsBySection('REVENUE', 'COST OF SERVICE');
+  const cosRows = getRowsBySection('COST OF SERVICE', 'GROSS PROFIT');
+  const sgaRows = getRowsBySection('SG&A', 'OPERATING PROFIT');
+
+  // Stream YTD values
+  const streamData = revRows.map(r => ({
+    code: String(r[COL.code]||'').trim(),
+    name: String(r[COL.name]||'').trim(),
+    jan: n(r[COL.jan]), feb: n(r[COL.feb]), mar: n(r[COL.mar]), apr: n(r[COL.apr]),
+    ytd: n(r[COL.ytd]) || monthCols.slice(0,activeMths).reduce((s,c)=>s+n(r[c]),0),
+    bgt: n(r[COL.bgt]), var: n(r[COL.var]), fy30: r[COL.fy30]
+  })).filter(r => r.code.startsWith('R'));
+
+  const cosData = cosRows.map(r => ({
+    code: String(r[COL.code]||'').trim(),
+    name: String(r[COL.name]||'').trim(),
+    jan: n(r[COL.jan]), feb: n(r[COL.feb]), mar: n(r[COL.mar]), apr: n(r[COL.apr]),
+    ytd: n(r[COL.ytd]) || monthCols.slice(0,activeMths).reduce((s,c)=>s+n(r[c]),0),
+    bgt: n(r[COL.bgt]), var: n(r[COL.var]), fy30: r[COL.fy30]
+  })).filter(r => r.code.startsWith('C'));
+
+  const sgaData = sgaRows.map(r => ({
+    code: String(r[COL.code]||'').trim(),
+    name: String(r[COL.name]||'').trim(),
+    jan: n(r[COL.jan]), feb: n(r[COL.feb]), mar: n(r[COL.mar]), apr: n(r[COL.apr]),
+    ytd: n(r[COL.ytd]) || monthCols.slice(0,activeMths).reduce((s,c)=>s+n(r[c]),0),
+    bgt: n(r[COL.bgt]), var: n(r[COL.var]), fy30: r[COL.fy30]
+  })).filter(r => r.code.startsWith('S'));
+
+  // Cost donut breakdown
+  const cosOffshore = cosData.find(r=>r.code==='C6');
+  const cosAMCAdv   = cosData.find(r=>r.code==='C1');
+  const cosAMCInv   = cosData.find(r=>r.code==='C4');
+  const cosOther    = cosData.filter(r=>!['C1','C4','C6'].includes(r.code)).reduce((s,r)=>s+r.ytd,0);
+  const sgaSal      = sgaData.filter(r=>['S1','S3'].includes(r.code)).reduce((s,r)=>s+r.ytd,0);
+  const sgaInfra    = sgaData.find(r=>r.code==='S6');
+  const sgaOther    = sgaData.filter(r=>!['S1','S3','S6'].includes(r.code)).reduce((s,r)=>s+r.ytd,0);
+
+  const donutData = [
+    { label: 'CoS: Offshore Ins.',  val: cosOffshore?.ytd || 0 },
+    { label: 'CoS: AMC Advisory',   val: cosAMCAdv?.ytd || 0 },
+    { label: 'CoS: AMC Invest.',     val: cosAMCInv?.ytd || 0 },
+    { label: 'CoS: Other',          val: cosOther },
+    { label: 'SG&A: Salaries',      val: sgaSal },
+    { label: 'SG&A: Infra.',        val: sgaInfra?.ytd || 0 },
+    { label: 'SG&A: Other',         val: sgaOther },
+  ];
+
+  // Budget attainment %
+  const revAtt   = bgtRev > 0 ? ytdRev / bgtRev * 100 : 0;
+  const gpVsBgt  = bgtGp > 0 ? (ytdGp - bgtGp * activeMths/12) / (bgtGp * activeMths/12) * 100 : 0;
+  const ebitVsBgt= bgtEbit > 0 ? (ytdEbit - bgtEbit * activeMths/12) / (bgtEbit * activeMths/12) * 100 : 0;
+  const niVsBgt  = bgtNi > 0 ? (ytdNi - bgtNi * activeMths/12) / (bgtNi * activeMths/12) * 100 : 0;
+  const costPctRev = ytdRev > 0 ? ytdCost / ytdRev * 100 : 0;
+  const costBgtTotal = bgtCos + (bgtSga || 12000000);
+
+  // Largest revenue driver (for insights)
+  const sortedStreams = [...streamData].sort((a,b) => b.ytd - a.ytd);
+  const topStream = sortedStreams[0];
+  const topPct = ytdRev > 0 ? topStream?.ytd / ytdRev * 100 : 0;
+
+  // Month with highest revenue
+  const peakMthIdx = mthRev.indexOf(Math.max(...mthRev));
+  const peakMthName = mthLabels[peakMthIdx] || '—';
+  const peakRev = mthRev[peakMthIdx] || 0;
+  const prevMthRev = peakMthIdx > 0 ? mthRev[peakMthIdx - 1] : 0;
+  const peakChange = prevMthRev > 0 ? Math.round((peakRev - prevMthRev) / prevMthRev * 100) : 0;
+
+  // Apr GP margin (last active month)
+  const lastMthGpM = mthGpM[activeMths - 1] || 0;
+
+  return {
+    activeMths, mthLabels, mthRev, mthCos, mthSga, mthGp, mthEbit, mthNi, mthGpM, mthEbitM,
+    ytdRev, ytdCos, ytdGp, ytdSga, ytdEbit, ytdNi, ytdCost,
+    gpMgnYtd, ebitMgnYtd, niMgnYtd,
+    bgtRev, bgtGp, bgtEbit, bgtNi, bgtCos,
+    annRev, annNi, annGp,
+    cagrRev, cagrNi, cagrGp,
+    fy30Rev, fy30Ni, fy30Gp,
+    revAtt, gpVsBgt, ebitVsBgt, niVsBgt, costPctRev, costBgtTotal,
+    streamData, cosData, sgaData, donutData,
+    topStream, topPct, peakMthName, peakRev, peakChange, prevMthRev, lastMthGpM,
+    oiRow, oeRow, fcRow, taxRow,
+    gpMgnRow, ebitMgnRow, niMgnRow,
+    n,
+    totRevRow, totCosRow, gpRow, totSgaRow, ebitRow, niRow,
+    COL
+  };
+}
+
+// ── FORMAT HELPERS ──
+function fM(v, dec=2) {
+  const m = v / 1000000;
+  return '฿' + (Math.abs(m) < 0.005 ? '0.00' : m.toFixed(dec)) + 'M';
+}
+function fN(v) {
+  if (v == null || v === '' || v === '—') return '—';
+  const n = Number(v);
+  if (isNaN(n)) return '—';
+  if (n === 0) return '—';
+  return n < 0
+    ? '(' + Math.abs(n).toLocaleString('en-US', {maximumFractionDigits:0}) + ')'
+    : n.toLocaleString('en-US', {maximumFractionDigits:0});
+}
+function fPct(v) {
+  const n = Number(v);
+  if (isNaN(n)) return '—';
+  return (n * 100 > 1 || n < 0 ? n : n * 100).toFixed(1) + '%';
+}
+function pct(v, dec=1) { return (Math.round(v * 10) / 10).toFixed(dec) + '%'; }
+
+// ── RENDER DASHBOARD ──
+function renderDashboard(d) {
+  const mo = d.activeMths;
+  const moStr = `M${String(mo).padStart(2,'0')}`;
+  const sub = `Consolidated · Company B · C · V · FY2026 · As of ${d.mthLabels[mo-1]} 2026 (${moStr} YTD)`;
+
+  // Headers
+  ['hdr-sub','hdr-sub2','hdr-sub3','hdr-sub4','hdr-sub5'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = sub;
+  });
+  document.getElementById('fin-period').textContent = `(${moStr} of M12)`;
+  document.getElementById('chart-period').textContent = `${d.mthLabels[0]}–${d.mthLabels[mo-1]} 2026`;
+  document.getElementById('pl-sub1').textContent = `UW GROUP · Company B · C · V · FY2026 · January – ${d.mthLabels[mo-1]} 2026 (${moStr} YTD) · All figures in Thai Baht (THB)`;
+
+  // ── KPI 4 ──
+  document.getElementById('k-rev').textContent = fM(d.ytdRev);
+  document.getElementById('k-rev-sub').textContent = `vs FY Budget ${fM(d.bgtRev,0)} · ${mo} months actuals`;
+  document.getElementById('k-rev-tag').textContent = pct(d.revAtt) + ' Budget Attainment';
+
+  document.getElementById('k-gp').textContent = fM(d.ytdGp);
+  const gpSub = `GP Margin ${pct(d.gpMgnYtd)} | ` + d.mthGpM.map((v,i) => `${d.mthLabels[i]} ${Math.round(v)}%`).join(' · ');
+  document.getElementById('k-gp-sub').textContent = gpSub;
+  const gpBudgetGap = d.bgtGp > 0 ? d.ytdGp - d.bgtGp * mo/12 : 0;
+  document.getElementById('k-gp-tag').textContent = `Budget Gap ${fM(Math.abs(gpBudgetGap),1)}`;
+
+  document.getElementById('k-ni').textContent = fM(d.ytdNi);
+  const prevPeriodNi = d.ytdNi - d.mthNi[mo-1];
+  const niVsPrev = d.ytdNi - prevPeriodNi;
+  document.getElementById('k-ni-sub').textContent = `${d.mthLabels[mo-1]} surge +${fM(d.mthNi[mo-1],2)} after prior months`;
+  const niTag = document.getElementById('k-ni-tag');
+  niTag.textContent = (niVsPrev >= 0 ? '+' : '') + fM(niVsPrev,2) + ' vs Prior Period';
+  niTag.className = 'kpi-tag ' + (niVsPrev >= 0 ? 't-green' : 't-red');
+
+  const annRevRounded = Math.round(d.annRev / 1000000 * 10) / 10;
+  const pctOf2030 = d.fy30Rev > 0 ? (d.annRev / d.fy30Rev * 100).toFixed(1) : '—';
+  document.getElementById('k-2030').textContent = '฿87.6M';
+  document.getElementById('k-2030-sub').textContent = `Requires ~${(d.fy30Rev/d.annRev).toFixed(1)}× current annualised run-rate of ~${fM(d.annRev,1)}`;
+
+  // ── INSIGHTS ──
+  const budgetLeft = d.bgtRev - d.ytdRev;
+  document.getElementById('ins-1').innerHTML = `<strong>Revenue Velocity Risk:</strong> ${mo} months active. ${fM(budgetLeft,1)} still required in remaining ${12-mo} months. Annualised run-rate ~${fM(d.annRev,1)} — ${d.annRev > d.bgtRev ? 'above' : 'below'} FY budget already.`;
+  document.getElementById('ins-2').innerHTML = `<strong>${d.peakMthName} Surge (+${d.peakChange}%):</strong> Revenue ${fM(d.peakRev,2)} in ${d.peakMthName} vs ${fM(d.prevMthRev,2)} prior month, driven by ${d.topStream?.name || '—'}.`;
+  const cosOffPct = d.ytdRev > 0 && d.cosData.find(r=>r.code==='C6') ? (d.cosData.find(r=>r.code==='C6').ytd / (d.streamData.find(r=>r.code==='R7')?.ytd||1) * 100).toFixed(1) : '—';
+  document.getElementById('ins-3').innerHTML = `<strong>Margin Compression:</strong> ${d.mthLabels[mo-1]} GP margin ${Math.round(d.lastMthGpM)}%, below 60% FY target. Offshore Insurance CoS = ${cosOffPct}% of its own revenue stream, dragging blended margin.`;
+  document.getElementById('ins-4').innerHTML = `<strong>FY2030 Vision:</strong> Revenue ฿87.6M · Net Income ฿25.3M · Net Margin 29.0%. Current annualised run-rate ~${fM(d.annRev,1)} = ${pctOf2030}% of 2030 revenue target.`;
+
+  // ── FIN 5 CELLS ──
+  document.getElementById('f-rev').textContent = '฿' + Math.round(d.ytdRev).toLocaleString();
+  document.getElementById('f-rev-sub').textContent = `FY Budget: ฿${Math.round(d.bgtRev).toLocaleString()}`;
+  document.getElementById('f-rev-mo').textContent = `${moStr} of M12`;
+  document.getElementById('pb-rev').style.width = Math.min(d.revAtt, 100) + '%';
+  document.getElementById('b-rev').textContent = pct(d.revAtt) + ' attained';
+
+  document.getElementById('f-gp').textContent = '฿' + Math.round(d.ytdGp).toLocaleString();
+  document.getElementById('f-gp-sub').textContent = `GP Margin ${pct(d.gpMgnYtd)}     Target: 60.0%`;
+  const gpVsBgtPct = d.gpVsBgt;
+  document.getElementById('pb-gp').style.width = Math.min(Math.abs(gpVsBgtPct)/100*100, 100) + '%';
+  document.getElementById('b-gp').textContent = (gpVsBgtPct >= 0 ? '+' : '') + pct(gpVsBgtPct) + ' vs Budget';
+
+  document.getElementById('f-ebit').textContent = '฿' + Math.round(d.ytdEbit).toLocaleString();
+  document.getElementById('f-ebit-sub').textContent = `Budget: ฿${Math.round(d.bgtEbit).toLocaleString()}     Target: 25.7%`;
+  document.getElementById('pb-ebit').style.width = Math.min(Math.abs(d.ebitVsBgt)/100*30, 100) + '%';
+  document.getElementById('b-ebit').textContent = (d.ebitVsBgt >= 0 ? '+' : '') + pct(d.ebitVsBgt) + ' vs Budget';
+
+  document.getElementById('f-ni').textContent = '฿' + Math.round(d.ytdNi).toLocaleString();
+  document.getElementById('f-ni-sub').textContent = `Budget: ฿${Math.round(d.bgtNi).toLocaleString()}     Target: 22.3%`;
+  document.getElementById('pb-ni').style.width = Math.min(Math.abs(d.niVsBgt)/100*30, 100) + '%';
+  document.getElementById('b-ni').textContent = (d.niVsBgt >= 0 ? '+' : '') + pct(d.niVsBgt) + ' vs Budget';
+
+  document.getElementById('f-cost').textContent = '฿' + Math.round(d.ytdCost).toLocaleString();
+  document.getElementById('f-cost-sub').textContent = `CoS ฿${(d.ytdCos/1000000).toFixed(2)}M · SG&A ฿${(d.ytdSga/1000000).toFixed(2)}M`;
+  document.getElementById('pb-cost').style.width = Math.min(d.costPctRev, 100) + '%';
+  document.getElementById('b-cost').textContent = pct(d.costPctRev) + ' of Revenue';
+  document.getElementById('b-cost2').textContent = d.costBgtTotal > 0 ? pct(d.ytdCost / d.costBgtTotal * 100) + ' of ฿' + (d.costBgtTotal/1000000).toFixed(1) + 'M bgt' : '';
+
+  // ── CHARTS ──
+  buildCharts(d);
+
+  // ── P&L TABLE 1: REVENUE + COS + GP ──
+  buildRevTable(d);
+
+  // ── P&L TABLE 2: SGA + EBIT + NI ──
+  buildSgaTable(d);
+
+  // ── STRATEGIC ROADMAP ──
+  const annRevM = (d.annRev/1000000).toFixed(1);
+  const annNiM  = (d.annNi/1000000).toFixed(1);
+  const pctRev  = (d.annRev/d.fy30Rev*100).toFixed(1);
+  const pctNi   = (d.annNi/d.fy30Ni*100).toFixed(1);
+  document.getElementById('ann-bar').innerHTML = `YTD ${moStr} Annualised Run-Rate: &nbsp;<span>~฿${annRevM}M Revenue</span> &nbsp;·&nbsp; <span>~฿${annNiM}M Net Income</span> &nbsp;·&nbsp; <span>${pctRev}% of Revenue Target</span> &nbsp;·&nbsp; <span>${pctNi}% of NI Target</span>`;
+
+  const pctGp = (d.annGp/d.fy30Gp*100).toFixed(1);
+  document.getElementById('tgt-rev-det').innerHTML = `Current annualised run-rate: ~฿${annRevM}M<br>${pctRev}% of target achieved on run-rate basis`;
+  document.getElementById('tgt-rev-cagr').textContent = `Req. CAGR ~${d.cagrRev}% from current base`;
+  document.getElementById('tgt-ni-det').innerHTML = `Target Net Margin: 29.0%<br>Current NI annualised ~฿${annNiM}M (${pctNi}% of target)`;
+  document.getElementById('tgt-ni-cagr').textContent = `Req. CAGR ~${d.cagrNi}% from current base`;
+  document.getElementById('tgt-gp-det').innerHTML = `Target GP Margin: 51.0%<br>Current GP annualised ~฿${(d.annGp/1000000).toFixed(1)}M (${pctGp}% of target)`;
+  document.getElementById('tgt-gp-cagr').textContent = `Req. CAGR ~${d.cagrGp}% from current base`;
+
+  document.getElementById('mgn-gp-cur').textContent   = `vs Current ${pct(d.gpMgnYtd)}`;
+  document.getElementById('mgn-ebit-cur').textContent = `vs Current ${pct(d.ebitMgnYtd)}`;
+  document.getElementById('mgn-ni-cur').textContent   = `vs Current ${pct(d.niMgnYtd)}`;
+}
+
+function buildCharts(d) {
+  const RED='#9a1220', RED2='#EE202E', DARK='#2d2d2d', TAN='#c8b89a', GREEN='#1a7a3c';
+  const font = { family: 'Prompt', size: 10 };
+
+  if (charts.rc) { charts.rc.destroy(); }
+  if (charts.rs) { charts.rs.destroy(); }
+  if (charts.wf) { charts.wf.destroy(); }
+  if (charts.mg) { charts.mg.destroy(); }
+  if (charts.dn) { charts.dn.destroy(); }
+
+  document.getElementById('cp-s1').textContent = `${d.mthLabels[0]}–${d.mthLabels[d.activeMths-1]} 2026 actuals · THB`;
+  document.getElementById('cp-s2').textContent = `By stream · Total ฿${Math.round(d.ytdRev).toLocaleString()}`;
+  document.getElementById('cp-s5').textContent = `CoS · SG&A breakdown | Total ฿${(d.ytdCost/1000000).toFixed(2)}M`;
+
+  // ── datalabels plugin (inline, no CDN needed) ──
+  // We use Chart.js built-in datalabels via custom afterDraw for simplicity
+
+  // Chart 1: Monthly Revenue vs Cost vs NI — show value on top of each bar
+  charts.rc = new Chart(document.getElementById('cRevCost'), {
+    type: 'bar',
+    data: {
+      labels: d.mthLabels,
+      datasets: [
+        { label: 'Total Revenue',  data: d.mthRev,  backgroundColor: TAN,  order: 2 },
+        { label: 'Cost of Service',data: d.mthCos,  backgroundColor: RED,  order: 2 },
+        { label: 'SG&A Expenses',  data: d.mthSga,  backgroundColor: DARK, order: 2 },
+        { label: 'Net Income', data: d.mthNi, type:'line', borderColor: TAN, backgroundColor: TAN,
+          pointRadius: 5, tension: 0.3, order: 1, datalabels: { display: true } }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font, boxWidth: 12 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ฿' + (c.raw/1000000).toFixed(2) + 'M' } }
+      },
+      scales: { x: { ticks: { font } }, y: { ticks: { font, callback: v => (v/1000000).toFixed(1)+'M' } } }
+    }
+  });
+
+  // Chart 2: Revenue by Stream — show ฿ value at end of each bar
+  const streamsSorted = [...d.streamData].sort((a,b)=>a.ytd-b.ytd);
+  const streamLabels = streamsSorted.map(r =>
+    r.name.replace('Advisory Fee (Personal)','Advisory')
+          .replace('Insurance Commission','Ins.')
+          .replace('AIA Membership –','AIA')
+          .replace('Investment Commission','Invest. Comm.')
+          .substring(0,24)
+  );
+  charts.rs = new Chart(document.getElementById('cRevStream'), {
+    type: 'bar',
+    data: {
+      labels: streamLabels,
+      datasets: [{
+        data: streamsSorted.map(r => r.ytd),
+        backgroundColor: RED,
+        borderRadius: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      layout: { padding: { right: 60 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => '฿' + c.raw.toLocaleString() } }
+      },
+      scales: {
+        x: { ticks: { font, callback: v => (v/1000000).toFixed(1)+'M' } },
+        y: { ticks: { font } }
+      },
+      animation: { onComplete: function() {
+        const chart = this;
+        const ctx = chart.ctx;
+        ctx.font = '10px Prompt, sans-serif';
+        ctx.fillStyle = '#434345';
+        ctx.textAlign = 'left';
+        chart.data.datasets.forEach((dataset, i) => {
+          chart.getDatasetMeta(i).data.forEach((bar, idx) => {
+            const val = dataset.data[idx];
+            if (val > 0) {
+              const label = val >= 1000000 ? '฿'+(val/1000000).toFixed(2)+'M' : '฿'+Math.round(val).toLocaleString();
+              ctx.fillText(label, bar.x + 5, bar.y + 4);
+            }
+          });
+        });
+      }}
+    }
+  });
+
+  // Chart 3: Waterfall — show ฿M label on top of each bar
+  charts.wf = new Chart(document.getElementById('cWaterfall'), {
+    type: 'bar',
+    data: {
+      labels: ['Revenue','CoS','Gross Profit','SG&A','EBIT'],
+      datasets: [{ data:[d.ytdRev, d.ytdCos, d.ytdGp, d.ytdSga, d.ytdEbit], backgroundColor:[TAN,RED,TAN,RED,GREEN] }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => '฿' + c.raw.toLocaleString() } }
+      },
+      scales: { x: { ticks: { font } }, y: { ticks: { font, callback: v => (v/1000000).toFixed(0)+'M' } } },
+      animation: { onComplete: function() {
+        const chart = this;
+        const ctx = chart.ctx;
+        ctx.font = 'bold 10px Prompt, sans-serif';
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textAlign = 'center';
+        chart.data.datasets.forEach((dataset, i) => {
+          chart.getDatasetMeta(i).data.forEach((bar, idx) => {
+            const val = dataset.data[idx];
+            if (val !== 0) {
+              const label = (val/1000000).toFixed(1)+'M';
+              ctx.fillText(label, bar.x, bar.y - 5);
+            }
+          });
+        });
+      }}
+    }
+  });
+
+  // Chart 4: Margin Profile — show % value at each data point
+  charts.mg = new Chart(document.getElementById('cMargin'), {
+    type: 'line',
+    data: {
+      labels: d.mthLabels,
+      datasets: [
+        { label:'GP%',   data: d.mthGpM.map(v=>Math.round(v)),   borderColor:TAN, backgroundColor:TAN, pointRadius:5, tension:0.3,
+          pointBackgroundColor: TAN },
+        { label:'EBIT%', data: d.mthEbitM.map(v=>Math.round(v)), borderColor:RED, backgroundColor:RED, pointRadius:5, tension:0.3,
+          pointBackgroundColor: RED }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { font, boxWidth: 12 } } },
+      scales: { x: { ticks: { font } }, y: { ticks: { font, callback: v => v+'%' } } },
+      animation: { onComplete: function() {
+        const chart = this;
+        const ctx = chart.ctx;
+        chart.data.datasets.forEach((dataset, i) => {
+          const meta = chart.getDatasetMeta(i);
+          const color = i === 0 ? '#8a7a5a' : '#9a1220';
+          ctx.font = 'bold 11px Prompt, sans-serif';
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          meta.data.forEach((point, idx) => {
+            const val = dataset.data[idx];
+            if (val !== null && val !== undefined) {
+              const yOff = val < 0 ? 16 : -10;
+              ctx.fillText(val + '%', point.x, point.y + yOff);
+            }
+          });
+        });
+      }}
+    }
+  });
+
+  // Chart 5: Donut — show % label on each slice
+  const donutColors = ['#9a1220','#6d0d17','#c41c2e','#e8a0a6','#434345','#7a7a7c','#b0b0b2'];
+  const donutTotal = d.donutData.reduce((s,x) => s + x.val, 0);
+  charts.dn = new Chart(document.getElementById('cDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: d.donutData.map(x => x.label),
+      datasets: [{ data: d.donutData.map(x => x.val), backgroundColor: donutColors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      cutout: '52%',
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { font: { family:'Prompt', size:9 }, boxWidth:10, padding:6 } },
+        tooltip: { callbacks: { label: c => c.label + ': ' + ((c.raw/donutTotal)*100).toFixed(0) + '%' } }
+      },
+      animation: { onComplete: function() {
+        const chart = this;
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        ctx.font = 'bold 10px Prompt, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        meta.data.forEach((arc, idx) => {
+          const val = chart.data.datasets[0].data[idx];
+          const pct = Math.round(val / donutTotal * 100);
+          if (pct < 3) return; // skip tiny slices
+          const angle = (arc.startAngle + arc.endAngle) / 2;
+          const r = (arc.innerRadius + arc.outerRadius) / 2;
+          const x = arc.x + Math.cos(angle) * r;
+          const y = arc.y + Math.sin(angle) * r;
+          ctx.fillStyle = pct > 15 ? '#fff' : '#1a1a1a';
+          ctx.fillText(pct + '%', x, y);
+        });
+        // Center label
+        ctx.font = 'bold 13px Prompt, sans-serif';
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const cx = (chart.chartArea.left + chart.chartArea.right) / 2;
+        const cy = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+        ctx.fillText('฿' + (donutTotal/1000000).toFixed(2) + 'M', cx, cy - 7);
+        ctx.font = '9px Prompt, sans-serif';
+        ctx.fillStyle = '#6b6b6d';
+        ctx.fillText('Total Costs', cx, cy + 8);
+      }}
+    }
+  });
+}
+
+function buildRevTable(d) {
+  const mo = d.activeMths;
+  const mthH = d.mthLabels.map(m=>`<th>${m}</th>`).join('');
+  let html = `<thead><tr><th>CODE</th><th>LINE ITEM</th>${mthH}<th>YTD ACTUAL</th><th>FY BUDGET</th><th>VARIANCE</th><th>FY2030</th></tr></thead><tbody>`;
+
+  // Helper: row cells for active months
+  function mCells(row, n) {
+    const cols = [d.COL.jan,d.COL.feb,d.COL.mar,d.COL.apr,d.COL.may,d.COL.jun,d.COL.jul,d.COL.aug,d.COL.sep,d.COL.oct,d.COL.nov,d.COL.dec];
+    return cols.slice(0, mo).map(c => {
+      const v = n(row?.[c]);
+      return `<td>${v === 0 ? '—' : fN(v)}</td>`;
+    }).join('');
+  }
+
+  // REVENUE section
+  html += `<tr class="tr-sec"><td></td><td colspan="${mo+4}">REVENUE</td></tr>`;
+  d.streamData.forEach(r => {
+    const cols = [d.COL.jan,d.COL.feb,d.COL.mar,d.COL.apr,d.COL.may,d.COL.jun,d.COL.jul,d.COL.aug,d.COL.sep,d.COL.oct,d.COL.nov,d.COL.dec].slice(0,mo);
+    // Get raw row
+    const rawRow = d.streamData.find(x=>x.code===r.code);
+    const mthVals = [r.jan,r.feb,r.mar,r.apr].slice(0,mo).map(v => `<td>${v===0?'—':fN(v)}</td>`).join('');
+    const varVal = r.ytd;
+    const fy30 = r.fy30 && r.fy30 !== '—' ? r.fy30 : '—';
+    html += `<tr><td>${r.code}</td><td>${r.name}</td>${mthVals}<td><strong>${fN(r.ytd)}</strong></td><td>—</td><td>${fN(varVal)}</td><td>${fy30}</td></tr>`;
+  });
+
+  // TOTAL REVENUE
+  const mthRevCells = d.mthRev.slice(0,mo).map(v=>`<td>${fN(v)}</td>`).join('');
+  const revVar = d.ytdRev - d.bgtRev;
+  html += `<tr class="tr-tot"><td></td><td>TOTAL REVENUE</td>${mthRevCells}<td><strong>${fN(d.ytdRev)}</strong></td><td>${fN(d.bgtRev)}</td><td class="neg">(${fN(Math.abs(revVar))})</td><td>100 M</td></tr>`;
+
+  // COS section
+  html += `<tr class="tr-sec"><td></td><td colspan="${mo+4}">COST OF SERVICE</td></tr>`;
+  d.cosData.forEach(r => {
+    const mthVals = [r.jan,r.feb,r.mar,r.apr].slice(0,mo).map(v=>`<td>${v===0?'—':fN(v)}</td>`).join('');
+    html += `<tr><td>${r.code}</td><td>${r.name}</td>${mthVals}<td><strong>${fN(r.ytd)}</strong></td><td>—</td><td>${fN(r.ytd)}</td><td>—</td></tr>`;
+  });
+
+  const mthCosCells = d.mthCos.slice(0,mo).map(v=>`<td>${fN(v)}</td>`).join('');
+  const cosVar = d.ytdCos - (d.bgtCos||14000000);
+  html += `<tr class="tr-tot"><td></td><td>TOTAL COST OF SERVICE</td>${mthCosCells}<td><strong>${fN(d.ytdCos)}</strong></td><td>${fN(d.bgtCos||14000000)}</td><td class="neg">(${fN(Math.abs(cosVar))})</td><td>—</td></tr>`;
+
+  // GROSS PROFIT
+  const mthGpCells = d.mthGp.slice(0,mo).map(v=>`<td>${fN(v)}</td>`).join('');
+  html += `<tr class="tr-gp"><td></td><td>GROSS PROFIT</td>${mthGpCells}<td><strong>${fN(d.ytdGp)}</strong></td><td>${fN(d.bgtGp||21000000)}</td><td class="neg">(${fN(Math.abs(d.ytdGp-(d.bgtGp||21000000)))})</td><td>44,693,000</td></tr>`;
+  const mthGpMCells = d.mthGpM.slice(0,mo).map(v=>`<td>${pct(v)}</td>`).join('');
+  html += `<tr class="tr-mgn"><td></td><td>&nbsp;&nbsp;Gross Profit Margin %</td>${mthGpMCells}<td><strong>${pct(d.gpMgnYtd)}</strong></td><td>60.0%</td><td class="neg">${pct(d.gpMgnYtd-60)}pp</td><td>51.0%</td></tr>`;
+
+  html += '</tbody>';
+  document.getElementById('tbl-rev').innerHTML = html;
+}
+
+function buildSgaTable(d) {
+  const mo = d.activeMths;
+  const mthH = d.mthLabels.map(m=>`<th>${m}</th>`).join('');
+  let html = `<thead><tr><th>CODE</th><th>LINE ITEM</th>${mthH}<th>YTD ACTUAL</th><th>FY BUDGET</th><th>VARIANCE</th><th>FY2030</th></tr></thead><tbody>`;
+
+  html += `<tr class="tr-sec"><td></td><td colspan="${mo+4}">SG&amp;A EXPENSES</td></tr>`;
+  d.sgaData.forEach(r => {
+    const mthVals = [r.jan,r.feb,r.mar,r.apr].slice(0,mo).map(v=>`<td>${v===0?'—':fN(v)}</td>`).join('');
+    html += `<tr><td>${r.code}</td><td>${r.name}</td>${mthVals}<td><strong>${r.ytd>0?fN(r.ytd):'—'}</strong></td><td>—</td><td>—</td><td>—</td></tr>`;
+  });
+
+  const mthSgaCells = d.mthSga.slice(0,mo).map(v=>`<td>${fN(v)}</td>`).join('');
+  const sgaVar = d.ytdSga - 12000000;
+  html += `<tr class="tr-tot"><td></td><td>TOTAL SG&amp;A</td>${mthSgaCells}<td><strong>${fN(d.ytdSga)}</strong></td><td>${fN(12000000)}</td><td class="neg">(${fN(Math.abs(sgaVar))})</td><td>—</td></tr>`;
+
+  const mthEbitCells = d.mthEbit.slice(0,mo).map(v=>`<td class="${v<0?'neg':''}">${fN(v)}</td>`).join('');
+  const ebitVar = d.ytdEbit - (d.bgtEbit||9000000);
+  html += `<tr class="tr-ebit"><td></td><td>OPERATING PROFIT (EBIT)</td>${mthEbitCells}<td><strong>${fN(d.ytdEbit)}</strong></td><td>${fN(d.bgtEbit||9000000)}</td><td class="neg">(${fN(Math.abs(ebitVar))})</td><td>44,693,000</td></tr>`;
+  const mthEbitMCells = d.mthEbitM.slice(0,mo).map(v=>`<td class="${v<0?'neg':''}">${pct(v)}</td>`).join('');
+  html += `<tr class="tr-mgn"><td></td><td>&nbsp;&nbsp;EBIT Margin %</td>${mthEbitMCells}<td><strong>${pct(d.ebitMgnYtd)}</strong></td><td>25.7%</td><td class="neg">${pct(d.ebitMgnYtd-25.7)}pp</td><td>51.0%</td></tr>`;
+
+  html += `<tr class="tr-other-hdr"><td></td><td colspan="${mo+4}">OTHER ITEMS (BELOW EBIT) — No YTD actuals recorded</td></tr>`;
+  [['OI','Other Income',d.oiRow],['OE','Other Expense',d.oeRow],['FC','Finance Cost',d.fcRow],['TAX','Income Tax',d.taxRow]].forEach(([code,name,row]) => {
+    const bgt = row ? d.n(row[d.COL.fybgt]) : 0;
+    const empties = Array(mo).fill('<td>—</td>').join('');
+    html += `<tr><td>${code}</td><td>${name}</td>${empties}<td><strong>0</strong></td><td>${bgt>0?fN(bgt):'—'}</td><td class="neg">${bgt>0?'('+fN(bgt)+')':'0'}</td><td>—</td></tr>`;
+  });
+
+  const mthNiCells = d.mthNi.slice(0,mo).map(v=>`<td class="${v<0?'neg':''}">${fN(v)}</td>`).join('');
+  const niVar = d.ytdNi - (d.bgtNi||7800000);
+  html += `<tr class="tr-ni"><td></td><td>NET INCOME</td>${mthNiCells}<td><strong>${fN(d.ytdNi)}</strong></td><td>${fN(d.bgtNi||7800000)}</td><td class="tr-ni-neg">(${fN(Math.abs(niVar))})</td><td>25,348,000</td></tr>`;
+  const mthNiMCells = d.mthNi.slice(0,mo).map((_,i) => {
+    const m = d.mthRev[i] > 0 ? d.mthNi[i]/d.mthRev[i]*100 : 0;
+    return `<td class="${m<0?'neg':''}">${pct(m)}</td>`;
+  }).join('');
+  html += `<tr class="tr-mgn"><td></td><td>&nbsp;&nbsp;Net Profit Margin %</td>${mthNiMCells}<td><strong>${pct(d.niMgnYtd)}</strong></td><td>22.3%</td><td class="neg">${pct(d.niMgnYtd-22.3)}pp</td><td>29.0%</td></tr>`;
+
+  html += '</tbody>';
+  document.getElementById('tbl-sga').innerHTML = html;
+
+  // KEY OBSERVATIONS
+  const topR7pct = d.ytdRev > 0 ? (d.streamData.find(r=>r.code==='R7')?.ytd||0)/d.ytdRev*100 : 0;
+  const sgaPctRev = d.ytdRev > 0 ? d.ytdSga/d.ytdRev*100 : 0;
+  const infraRow = d.sgaData.find(r=>r.code==='S6');
+  document.getElementById('obs-box').innerHTML = `<strong>Key Observations</strong><br>
+· ${d.mthLabels[d.activeMths-1]} was the highest-revenue month — driven by a single Offshore Insurance placement. R7 alone = ${Math.round(topR7pct)}% of YTD revenue → revenue concentration risk.<br>
+· OI, OE, FC, TAX all show ฿0 YTD actuals — tax and other items not yet recognised. EBIT therefore equals Net Income at ${String(d.activeMths).padStart(2,'0')}. FY NI budget is below EBIT budget, reflecting expected H2 charges.<br>
+· SG&amp;A running at ${pct(sgaPctRev)} of YTD revenue vs 34.3% budget — delayed headcount and project spend. S6 Infrastructure is the largest SG&amp;A item at ฿${infraRow?(infraRow.ytd/1000000).toFixed(2):'—'}M.`;
+}
+
+// ── RENDER PCF ──
+function renderPCF(rows) {
+  // Auto-detect column positions from header row
+  // Old format: 0=ClientNo, 1=Name, 2=Fee, 3=Segment, 4=Status
+  // New format: 0=ClientNo, 1=Name, 2=Paid, 3=null, 4=Fee, 5=Segment, 6=Status
+  const headerRow = rows[1] || rows[0] || [];
+  const colPaid    = headerRow.findIndex(c => c && String(c).toLowerCase() === 'paid');
+  const colFee     = headerRow.findIndex(c => c && String(c).toLowerCase().includes('consult fee') || (c && String(c).toLowerCase() === 'consult fee'));
+  const colSeg     = headerRow.findIndex(c => c && String(c) === 'Segment');
+  const colStatus  = headerRow.findIndex(c => c && String(c) === 'Status');
+
+  // Fallback: old format (no Paid column)
+  const hasPaid = colPaid >= 0;
+  const feeCol  = colFee >= 0 ? colFee : 2;
+  const segCol  = colSeg >= 0 ? colSeg : 3;
+  const statCol = colStatus >= 0 ? colStatus : 4;
+
+  const data = rows.slice(2).filter(r => r && r[0] != null);
+
+  // Active cases: exclude Waive/zero-fee C3
+  const active = data.filter(r => {
+    const fee = Number(r[feeCol]) || 0;
+    const paid = hasPaid ? String(r[colPaid] || '') : 'Yes';
+    return fee > 0 || paid.toUpperCase() === 'NO';
+  });
+
+  // Paid vs outstanding
+  const paidRows = hasPaid
+    ? active.filter(r => String(r[colPaid]||'No').toUpperCase() === 'YES')
+    : active;
+  const outRows  = hasPaid
+    ? active.filter(r => String(r[colPaid]||'No').toUpperCase() !== 'YES')
+    : [];
+
+  const totalCases = active.length;
+  const paidCases  = paidRows.length;
+  const outCases   = outRows.length;
+  const totalVal   = active.reduce((s,r) => s + (Number(r[feeCol])||0), 0);
+  const paidVal    = paidRows.reduce((s,r) => s + (Number(r[feeCol])||0), 0);
+  const outVal     = outRows.reduce((s,r) => s + (Number(r[feeCol])||0), 0);
+
+  // Type breakdown (paid only)
+  const review    = paidRows.filter(r => r[statCol] === 'Review');
+  const firstYear = paidRows.filter(r => r[statCol] === 'First Year');
+  const ryVal = review.reduce((s,r) => s+(Number(r[feeCol])||0), 0);
+  const fyVal = firstYear.reduce((s,r) => s+(Number(r[feeCol])||0), 0);
+
+  // Tier (paid only)
+  const c1 = paidRows.filter(r => r[segCol] === 'C1');
+  const c2 = paidRows.filter(r => r[segCol] === 'C2');
+  const c1Val = c1.reduce((s,r) => s+(Number(r[feeCol])||0), 0);
+  const c2Val = c2.reduce((s,r) => s+(Number(r[feeCol])||0), 0);
+
+  const fmt = v => v.toLocaleString('th-TH', {maximumFractionDigits:0});
+
+  // KPI 4
+  document.getElementById('pcf-total-cases').textContent  = totalCases;
+  document.getElementById('pcf-total-val').textContent    = fmt(Math.round(totalVal));
+  document.getElementById('pcf-paid-cases').textContent   = paidCases;
+  document.getElementById('pcf-paid-val').textContent     = fmt(Math.round(paidVal)) + ' บาท';
+  document.getElementById('pcf-out-cases').textContent    = outCases || zeroFee.length;
+  document.getElementById('pcf-out-val').textContent      = fmt(outVal) + ' บาท';
+
+  const paidPct = totalCases > 0 ? paidCases/totalCases*100 : 0;
+  document.getElementById('pcf-bar-paid').style.width = paidPct + '%';
+  document.getElementById('pcf-bar-out').style.width  = (100 - paidPct) + '%';
+
+  // Payment status
+  document.getElementById('pcf-s-paid-count').textContent = paidCases + ' เคส';
+  document.getElementById('pcf-s-out-count').textContent  = (outCases || zeroFee.length) + ' เคส';
+  document.getElementById('pcf-s-paid-pct').textContent   = paidPct.toFixed(1) + '%';
+  document.getElementById('pcf-s-out-pct').textContent    = (100-paidPct).toFixed(1) + '%';
+  document.getElementById('pcf-prog-paid').style.width    = paidPct + '%';
+  document.getElementById('pcf-prog-out').style.width     = (100-paidPct) + '%';
+  document.getElementById('pcf-t-paid').textContent   = fmt(Math.round(paidVal)) + ' บาท';
+  document.getElementById('pcf-t-out').textContent    = fmt(outVal) + ' บาท';
+  document.getElementById('pcf-t-total').textContent  = fmt(Math.round(totalVal)) + ' บาท';
+
+  // Review / First Year
+  const ryPct = totalVal > 0 ? ryVal/totalVal*100 : 0;
+  const fyPct = totalVal > 0 ? fyVal/totalVal*100 : 0;
+  document.getElementById('pcf-ry-count').textContent  = review.length + ' เคส';
+  document.getElementById('pcf-ry-val').textContent    = fmt(Math.round(ryVal)) + ' บาท';
+  document.getElementById('pcf-ry-pct').textContent    = '· ' + ryPct.toFixed(1) + '%';
+  document.getElementById('pcf-prog-ry').style.width   = ryPct + '%';
+  document.getElementById('pcf-fy-count').textContent  = firstYear.length + ' เคส';
+  document.getElementById('pcf-fy-val').textContent    = fmt(Math.round(fyVal)) + ' บาท';
+  document.getElementById('pcf-fy-pct').textContent    = '· ' + fyPct.toFixed(1) + '%';
+  document.getElementById('pcf-prog-fy').style.width   = fyPct + '%';
+
+  // Tiers
+  const c1Pct = totalVal > 0 ? c1Val/totalVal*100 : 0;
+  const c2Pct = totalVal > 0 ? c2Val/totalVal*100 : 0;
+  document.getElementById('pcf-c1-count').textContent = c1.length + ' เคส';
+  document.getElementById('pcf-c1-val').textContent   = fmt(Math.round(c1Val));
+  document.getElementById('pcf-c1-pct').textContent   = 'บาท · สัดส่วน ' + c1Pct.toFixed(1) + '%';
+  document.getElementById('pcf-bar-c1').style.width   = c1Pct + '%';
+  document.getElementById('pcf-c2-count').textContent = c2.length + ' เคส';
+  document.getElementById('pcf-c2-val').textContent   = fmt(Math.round(c2Val));
+  document.getElementById('pcf-c2-pct').textContent   = 'บาท · สัดส่วน ' + c2Pct.toFixed(1) + '%';
+  document.getElementById('pcf-bar-c2').style.width   = c2Pct + '%';
+
+  // Show PCF dashboard, hide notice
+  document.getElementById('pcf-waiting').style.display = 'none';
+  document.getElementById('pcf-dashboard').style.display = 'block';
+}
+</script>
+</body>
+</html>
